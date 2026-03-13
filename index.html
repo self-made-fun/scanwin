@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KIN LAB | Shake & Win</title>
+    <style>
+        :root { --gold: #ffd700; --blue: #00d2ff; --bg: #050505; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; 
+               display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; overflow: hidden; }
+        
+        .card { 
+            background: #111; padding: 40px 25px; border-radius: 35px; width: 85%; max-width: 320px; 
+            border: 2px solid #222; position: relative;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+        }
+        
+        .card.winner { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 30px rgba(0, 210, 255, 0.4); }
+        .logo { width: 90px; margin-bottom: 20px; }
+        
+        #reward { font-size: 26px; font-weight: 900; margin: 20px 0; text-transform: uppercase; min-height: 70px; }
+        .win { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+        
+        /* Novi stil za tajmer */
+        .timer-box { margin-top: 15px; }
+        .timer-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .timer-value { font-size: 20px; color: var(--blue); font-family: monospace; font-weight: bold; margin-top: 5px; }
+        
+        .footer { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-top: 25px; }
+        
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 999; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body id="body">
+
+<div class="card" id="card">
+    <img src="https://i.ibb.co/HyQGCNJ/images-removebg-preview.png" class="logo">
+    <div id="reward">UČITAVANJE...</div>
+    
+    <div id="timer-box" class="timer-box" style="display:none;">
+        <div class="timer-label">NOVA ŠANSA ZA:</div>
+        <div id="timer" class="timer-value">00h 00m 00s</div>
+    </div>
+    
+    <div class="footer">KIN LAB BIHAĆ</div>
+</div>
+
+<script>
+const LOCK_DURATION = 12 * 60 * 60 * 1000; // 12 sati
+
+function spawnConfetti() {
+    for(let i=0; i<40; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.backgroundColor = (Math.random() > 0.5) ? '#ffd700' : '#00d2ff';
+        c.style.animation = `fall ${2 + Math.random()*2}s linear forwards`;
+        document.body.appendChild(c);
+    }
+}
+
+function startTimer(endTime) {
+    document.getElementById('timer-box').style.display = 'block';
+    
+    const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const diff = endTime - now;
+        
+        if (diff <= 0) {
+            clearInterval(interval);
+            location.reload();
+            return;
+        }
+        
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        document.getElementById('timer').innerText = 
+            `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+    }, 1000);
+}
+
+function init() {
+    const rEl = document.getElementById('reward');
+    const storedTime = localStorage.getItem('kl_lock_time');
+    const now = new Date().getTime();
+    
+    if (storedTime && (now - storedTime < LOCK_DURATION)) {
+        // AKO JE POD LOCKOM
+        rEl.innerText = "VIDIMO SE SUTRA";
+        rEl.style.color = "#fff";
+        startTimer(parseInt(storedTime) + LOCK_DURATION);
+    } else {
+        // PRVO SKENIRANJE
+        const rand = Math.random() * 100;
+        let res = "NIŠTA DANAS 👍";
+        
+        if (rand < 3) { res = "BESPLATAN ŠEJK 🥤"; rEl.className = "win"; spawnConfetti(); document.getElementById('card').className += " winner"; }
+        else if (rand < 25) { res = "50% POPUSTA 🏷️"; rEl.className = "win"; spawnConfetti(); document.getElementById('card').className += " winner"; }
+        else if (rand < 65) { res = "MALI POKLON 🎁"; rEl.className = "win"; spawnConfetti(); document.getElementById('card').className += " winner"; }
+
+        rEl.innerText = res;
+        localStorage.setItem('kl_lock_time', now);
+        // Opcionalno: pokaži timer i nakon dobitka da znaju kad mogu opet
+        startTimer(now + LOCK_DURATION);
+    }
+}
+init();
+</script>
+</body>
+</html>
